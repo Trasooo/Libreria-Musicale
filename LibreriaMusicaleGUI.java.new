@@ -1,0 +1,124 @@
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.util.List;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONObject;
+
+public class LibreriaMusicaleGUI extends JFrame {
+    // ...resto del codice esistente...
+    
+    private void creaPanelVisualizza() {
+        panelVisualizza = new JPanel(new BorderLayout());
+        panelVisualizza.setBackground(BACKGROUND_COLOR);
+        panelVisualizza.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        
+        // Titolo
+        JLabel labelTitolo = new JLabel("VISUALIZZA LIBRERIA", SwingConstants.CENTER);
+        labelTitolo.setFont(new Font("Arial", Font.BOLD, 20));
+        labelTitolo.setForeground(ACCENT_COLOR);
+        labelTitolo.setBorder(BorderFactory.createEmptyBorder(10, 0, 20, 0));
+        panelVisualizza.add(labelTitolo, BorderLayout.NORTH);
+        
+        // Panel per i pulsanti di scelta
+        JPanel panelScelte = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        panelScelte.setBackground(BACKGROUND_COLOR);
+        
+        JButton btnCerca = new JButton("Cerca Canzone");
+        styleButton(btnCerca);
+        
+        JButton btnTutte = new JButton("Mostra Tutte");
+        styleButton(btnTutte);
+        
+        panelScelte.add(btnCerca);
+        panelScelte.add(btnTutte);
+        
+        // Crea l'albero per la visualizzazione
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Libreria Musicale");
+        JTree tree = new JTree(root);
+        tree.setRootVisible(false);
+        tree.setShowsRootHandles(true);
+        tree.setFont(new Font("Arial", Font.PLAIN, 14));
+        
+        // Configura il renderer personalizzato per i colori
+        DefaultTreeCellRenderer renderer = new DefaultTreeCellRenderer();
+        renderer.setBackgroundSelectionColor(ACCENT_COLOR);
+        renderer.setTextSelectionColor(Color.BLACK);
+        renderer.setBackgroundNonSelectionColor(BUTTON_COLOR);
+        renderer.setTextNonSelectionColor(TEXT_COLOR);
+        tree.setCellRenderer(renderer);
+        tree.setRowHeight(25);
+        
+        // Applica i colori direttamente al JTree
+        tree.setBackground(BUTTON_COLOR);
+        tree.setForeground(TEXT_COLOR);
+        
+        JScrollPane scrollTree = new JScrollPane(tree);
+        scrollTree.setBackground(BACKGROUND_COLOR);
+        scrollTree.setBorder(BorderFactory.createLineBorder(ACCENT_COLOR, 1));
+        
+        // Panel centrale
+        JPanel panelCentrale = new JPanel(new BorderLayout());
+        panelCentrale.setBackground(BACKGROUND_COLOR);
+        panelCentrale.add(panelScelte, BorderLayout.NORTH);
+        panelCentrale.add(scrollTree, BorderLayout.CENTER);
+        panelVisualizza.add(panelCentrale, BorderLayout.CENTER);
+        
+        // Pulsante Indietro
+        JPanel panelIndietro = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        panelIndietro.setBackground(BACKGROUND_COLOR);
+        JButton btnIndietro = new JButton("Indietro (Doppio Click)");
+        styleButton(btnIndietro);
+        btnIndietro.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    cardLayout.show(mainPanel, "PRINCIPALE");
+                }
+            }
+        });
+        panelIndietro.add(btnIndietro);
+        panelVisualizza.add(panelIndietro, BorderLayout.SOUTH);
+        
+        // Gestione eventi per ricerca e visualizzazione
+        btnCerca.addActionListener(e -> {
+            String criterio = JOptionPane.showInputDialog(this,
+                "Inserisci il criterio di ricerca (titolo, album o artista):",
+                "Cerca Canzone",
+                JOptionPane.QUESTION_MESSAGE);
+            
+            if (criterio != null && !criterio.trim().isEmpty()) {
+                try {
+                    List<Canzone> risultati = gestore.cercaCanzone(criterio.trim());
+                    mostraRisultatiNellAlbero(risultati, tree, "Risultati ricerca per: " + criterio);
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(this, "Errore nella ricerca: " + ex.getMessage(),
+                                                "Errore", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+        
+        btnTutte.addActionListener(e -> {
+            try {
+                List<Canzone> tutteLeCanzoni = gestore.visualizzaLibreria();
+                mostraRisultatiNellAlbero(tutteLeCanzoni, tree, "Tutte le canzoni nella libreria");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this, "Errore nel caricare la libreria: " + ex.getMessage(),
+                                            "Errore", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+    }
+    
+    // ...resto del codice esistente...
+}
